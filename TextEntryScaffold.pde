@@ -29,6 +29,61 @@ PImage watch;
 //Variables for my silly implementation. You can delete this:
 char currentLetter = 'a';
 
+class CustomButton {
+  float x, y, width, height;
+  color buttonColor;
+  String label;
+  float textSize;
+  boolean isPressed = false; // track press state
+
+  CustomButton(float x, float y, float width, float height, color buttonColor, String label, float textSize) {
+    this.x = x;
+    this.y = y;
+    this.width = width;
+    this.height = height;
+    this.buttonColor = buttonColor;
+    this.label = label;
+    this.textSize = textSize;
+  }
+
+  void display() {
+    // Set the border color and weight
+    stroke(255); // White color for the border
+    strokeWeight(1); // Set the border width
+    
+    if (isPressed) {
+      fill(50); // Darken the button color when pressed
+    } else {
+      fill(buttonColor);
+    }
+    rect(x, y, width, height);
+    fill(255); // Text color
+    textSize(textSize);
+    textAlign(CENTER, CENTER);
+    text(label, x + width/2, y + height/2);
+    textSize(24);
+    noStroke();
+  }
+
+  boolean isClicked(float mouseX, float mouseY) {
+    return mouseX > x && mouseX < x + width && mouseY > y && mouseY < y + height;
+  }
+}
+
+// Declare buttons
+//CustomButton[] placeholderButtons = new CustomButton[8];
+CustomButton spaceButton, backspaceButton;
+//CustomButton redButton;
+//CustomButton greenButton;
+CustomButton ABCButton, DEFButton, GHIButton, JKLButton, MNOButton, PQRSButton, TUVButton, WXYZButton;
+
+// Declare global variables to track button clicking state
+int lastClickTime = 0;
+int clickCount = 0;
+String lastClickedLabel = "";
+// allow auto entry boolean flag
+boolean allowAutoEntry = true;
+
 //You can modify anything in here. This is just a basic implementation.
 void setup()
 {
@@ -39,9 +94,34 @@ void setup()
  
   orientation(LANDSCAPE); //can also be PORTRAIT - sets orientation on android device
   size(800, 800); //Sets the size of the app. You should modify this to your device's native size. Many phones today are 1080 wide by 1920 tall.
-  textFont(createFont("Arial", 24)); //set the font to arial 24. Creating fonts is expensive, so make difference sizes once in setup, not draw
+  textFont(createFont("Arial Unicode MS", 24)); //set the font to arial 24. Creating fonts is expensive, so make difference sizes once in setup, not draw
   noStroke(); //my code doesn't use any strokes
   lastLetterChangeTime = -1;  // Initialize the timer, -1 means no button click yet
+  
+  float buttonSize = sizeOfInputArea / 4;
+  //redButton = new CustomButton(width/2 - sizeOfInputArea/2, height/2 - sizeOfInputArea/2 + buttonSize, buttonSize, buttonSize, color(255, 0, 0), "PREV", 12);
+  //greenButton = new CustomButton(width/2 - sizeOfInputArea/2 + buttonSize, height/2 - sizeOfInputArea/2 + buttonSize, buttonSize, buttonSize, color(0, 255, 0), "NEXT", 12);
+  /*String[] labels = {"abc", "def", "ghi", "jkl", "mno", "pqrs", "tuv", "wxyz"};
+  for (int i = 0; i < 8; i++) {
+    int row = 1 + i / 4;
+    int col = i % 4;
+    placeholderButtons[i] = new CustomButton(width/2 - sizeOfInputArea/2 + col * buttonSize, height/2 - sizeOfInputArea/2 + row * buttonSize, buttonSize, buttonSize, color(128), labels[i], 12);
+  }*/
+
+  // SPACE button covering grid[3][0] and grid[3][1]
+  spaceButton = new CustomButton(width/2 - sizeOfInputArea/2, height/2 - sizeOfInputArea/2 + 3 * buttonSize, 2 * buttonSize, buttonSize, color(128), "SPACE", 12);
+
+  // Backspace button covering grid[3][2] and grid[3][3]
+  backspaceButton = new CustomButton(width/2 - sizeOfInputArea/2 + 2 * buttonSize, height/2 - sizeOfInputArea/2 + 3 * buttonSize, 2 * buttonSize, buttonSize, color(128), "⌫", 12);
+  
+  ABCButton = new CustomButton(width/2 - sizeOfInputArea/2, height/2 - sizeOfInputArea/2 + buttonSize, buttonSize, buttonSize, color(128), "abc", 12);
+  DEFButton = new CustomButton(width/2 - sizeOfInputArea/2 + buttonSize, height/2 - sizeOfInputArea/2 + buttonSize, buttonSize, buttonSize, color(128), "def", 12);
+  GHIButton = new CustomButton(width/2 - sizeOfInputArea/2 + buttonSize * 2, height/2 - sizeOfInputArea/2 + buttonSize, buttonSize, buttonSize, color(128), "ghi", 12);
+  JKLButton = new CustomButton(width/2 - sizeOfInputArea/2 + buttonSize * 3, height/2 - sizeOfInputArea/2 + buttonSize, buttonSize, buttonSize, color(128), "jkl", 12);
+  MNOButton = new CustomButton(width/2 - sizeOfInputArea/2, height/2 - sizeOfInputArea/2 + buttonSize * 2, buttonSize, buttonSize, color(128), "mno", 12);
+  PQRSButton = new CustomButton(width/2 - sizeOfInputArea/2 + buttonSize, height/2 - sizeOfInputArea/2 + buttonSize * 2, buttonSize, buttonSize, color(128), "pqrs", 12);
+  TUVButton = new CustomButton(width/2 - sizeOfInputArea/2 + buttonSize * 2, height/2 - sizeOfInputArea/2 + buttonSize * 2, buttonSize, buttonSize, color(128), "tuv", 12);
+  WXYZButton = new CustomButton(width/2 - sizeOfInputArea/2 + buttonSize * 3, height/2 - sizeOfInputArea/2 + buttonSize * 2, buttonSize, buttonSize, color(128), "wxyz", 12);
 }
 
 //You can modify anything in here. This is just a basic implementation.
@@ -90,25 +170,50 @@ void draw()
 
     //my draw code
     // Refactored button drawing with labels
-    drawButton(width/2-sizeOfInputArea/2, height/2-sizeOfInputArea/2+sizeOfInputArea/2, sizeOfInputArea/2, sizeOfInputArea/2, color(255, 0, 0), "PREV");
-    drawButton(width/2-sizeOfInputArea/2+sizeOfInputArea/2, height/2-sizeOfInputArea/2+sizeOfInputArea/2, sizeOfInputArea/2, sizeOfInputArea/2, color(0, 255, 0), "NEXT");
+    // Adjust size and position
+    // Button size based on the smartwatch screen size
+    // Display buttons
+    /*for (CustomButton button : placeholderButtons) {
+      button.display();
+    }*/
     
-    textAlign(CENTER);
+  
+    spaceButton.display();
+    backspaceButton.display();
+    
+    ABCButton.display();
+    DEFButton.display();
+    GHIButton.display();
+    JKLButton.display();
+    MNOButton.display();
+    PQRSButton.display();
+    TUVButton.display();
+    WXYZButton.display();
+
+    textAlign(CENTER, CENTER);
     fill(200);
-    text("" + currentLetter, width/2, height/2-sizeOfInputArea/4); //draw current letter
-    
+    text("" + currentLetter, width/2, height/2 - sizeOfInputArea/2 + sizeOfInputArea/8);
+
+    if (!allowAutoEntry && millis() - lastLetterChangeTime > 200) {
+      allowAutoEntry = true;
+    }
     checkForAutomaticEntry(); // Check for automatic letter entry
 
   }
 }
+
+// Draw a single button on the screen
 void drawButton(float x, float y, float w, float h, color c, String label) {
     fill(c);
     rect(x, y, w, h);
     fill(255);
+    textSize(10);
     textAlign(CENTER, CENTER);
     text(label, x + w/2, y + h/2);
+    textSize(24);
 }
 
+// Handle auto letter entry
 void checkForAutomaticEntry() {
   
   if (lastLetterChangeTime != -1 && millis() - lastLetterChangeTime > letterEntryTimeout) {
@@ -117,7 +222,7 @@ void checkForAutomaticEntry() {
       currentTyped = currentTyped.substring(0, currentTyped.length()-1);
     } else {
       if (currentLetter == '_'){
-        currentTyped += ' ';
+        //currentTyped += ' ';
       } else {
         currentTyped += currentLetter;
       }
@@ -127,6 +232,7 @@ void checkForAutomaticEntry() {
   }
 }
 
+// Reset timer
 void resetTimer() {
   lastLetterChangeTime = millis();
 }
@@ -138,19 +244,101 @@ boolean didMouseClick(float x, float y, float w, float h) //simple function to d
   return (mouseX > x && mouseX<x+w && mouseY>y && mouseY<y+h); //check to see if it is in button bounds
 }
 
+// Handle multi-letter key input
+void handleButtonMultiClick(CustomButton button, String label) {
+  if (button.isClicked(mouseX, mouseY)) {
+    int currentTime = millis();
+    if (!lastClickedLabel.equals(label) || currentTime - lastClickTime > 1500) {
+      clickCount = 0;
+      lastClickedLabel = label;
+    }
+
+    lastClickTime = currentTime;
+    clickCount = (clickCount % label.length()) + 1;
+    currentLetter = label.charAt(clickCount - 1);
+
+    // Update lastLetterChangeTime and reset allowAutoEntry
+    lastLetterChangeTime = millis();
+    allowAutoEntry = false;
+  }
+}
+
+// Handle backspace key input, override all other keys
+void handleBackspace() {
+  if (currentTyped.length() > 0) {
+    // Remove the last character from currentTyped
+    currentTyped = currentTyped.substring(0, currentTyped.length() - 1);
+    currentLetter = '_';
+  }
+  // Reset the last letter change time to prevent immediate automatic entry of a new letter
+  lastLetterChangeTime = millis();
+  allowAutoEntry = false;
+}
+
+// Handle space key input, override all other keys
+void handleSpace() {
+  currentTyped += " ";
+  currentLetter = '_';
+  // Reset the last letter change time to prevent immediate automatic entry of a new letter
+  lastLetterChangeTime = millis();
+  allowAutoEntry = false;
+}
+
+// Helper func to process button pressed state
+void updateButtonPressState(CustomButton button) {
+  if (button.isClicked(mouseX, mouseY)) {
+    button.isPressed = true;
+  }
+}
 //my terrible implementation you can entirely replace
 void mousePressed()
 {
   // Check if the left (Prev) button is clicked
-  if (didMouseClickForPrev()) {
+  /*if (redButton.isClicked(mouseX, mouseY)) {
+    // Red button logic
     handlePrevButton();
   }
-  // Check if the right (Next) button is clicked
-  if (didMouseClickForNext()) {
+  if (greenButton.isClicked(mouseX, mouseY)) {
+    // Green button logic
     handleNextButton();
+  }*/
+  //checkButtonClick(ABCButton, "abc");
+  // Handle button press color change
+  updateButtonPressState(ABCButton);
+  updateButtonPressState(DEFButton);
+  updateButtonPressState(GHIButton);
+  updateButtonPressState(JKLButton);
+  updateButtonPressState(MNOButton);
+  updateButtonPressState(PQRSButton);
+  updateButtonPressState(TUVButton);
+  updateButtonPressState(WXYZButton);
+  updateButtonPressState(spaceButton);
+  updateButtonPressState(backspaceButton);
+  // Handle letter input events
+  handleButtonMultiClick(ABCButton, "abc");
+  handleButtonMultiClick(DEFButton, "def");
+  handleButtonMultiClick(GHIButton, "ghi");
+  handleButtonMultiClick(JKLButton, "jkl");
+  handleButtonMultiClick(MNOButton, "mno");
+  handleButtonMultiClick(PQRSButton, "pqrs");
+  handleButtonMultiClick(TUVButton, "tuv");
+  handleButtonMultiClick(WXYZButton, "wxyz");
+  //handleButtonMultiClick(spaceButton, "_");
+
+  if (spaceButton.isClicked(mouseX, mouseY)) {
+    //println("Clicked: SPACE");
+    // Add SPACE logic
+    handleSpace();
   }
 
-  if (didMouseClick(width/2-sizeOfInputArea/2, height/2-sizeOfInputArea/2, sizeOfInputArea, sizeOfInputArea/2)) //check if click occured in letter area
+  if (backspaceButton.isClicked(mouseX, mouseY)) {
+    //println("Clicked: ⌫");
+    // Add backspace logic
+    handleBackspace();
+  }
+
+
+  /*if (didMouseClick(width/2-sizeOfInputArea/2, height/2-sizeOfInputArea/2, sizeOfInputArea, sizeOfInputArea/2)) //check if click occured in letter area
   {
     if (currentLetter=='_') //if underscore, consider that a space bar
       currentTyped+=" ";
@@ -158,6 +346,17 @@ void mousePressed()
       currentTyped = currentTyped.substring(0, currentTyped.length()-1);
     else if (currentLetter!='`') //if not any of the above cases, add the current letter to the typed string
       currentTyped+=currentLetter;
+  }*/
+  // Adjust this to check for clicks in the top 1/4 area of sizeOfInputArea
+  if (didMouseClick(width/2 - sizeOfInputArea/2, height/2 - sizeOfInputArea/2, sizeOfInputArea, sizeOfInputArea/4)) {
+    // Logic for when the top 1/4 area is clicked
+    if (currentLetter == '_') {
+      currentTyped += " ";
+    } else if (currentLetter == '`' && currentTyped.length() > 0) {
+      currentTyped = currentTyped.substring(0, currentTyped.length() - 1);
+    } else if (currentLetter != '`') {
+      currentTyped += currentLetter;
+    }
   }
 
   //You are allowed to have a next button outside the 1" area
@@ -165,6 +364,21 @@ void mousePressed()
   {
     nextTrial(); //if so, advance to next trial
   }
+}
+
+
+void mouseReleased() {
+  ABCButton.isPressed = false;
+  DEFButton.isPressed = false;
+  GHIButton.isPressed = false;
+  JKLButton.isPressed = false;
+  MNOButton.isPressed = false;
+  PQRSButton.isPressed = false;
+  TUVButton.isPressed = false;
+  WXYZButton.isPressed = false;
+  spaceButton.isPressed = false;
+  backspaceButton.isPressed = false;
+  // ... Reset other buttons similarly ...
 }
 
 boolean didMouseClickForPrev() {
@@ -267,9 +481,6 @@ void drawWatch()
   image(watch, 0, 0);
   popMatrix();
 }
-
-
-
 
 
 //=========SHOULD NOT NEED TO TOUCH THIS METHOD AT ALL!==============
