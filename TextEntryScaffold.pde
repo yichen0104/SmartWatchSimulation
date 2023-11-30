@@ -204,7 +204,7 @@ void draw()
     if (!allowAutoEntry && millis() - lastLetterChangeTime > 200) {
       allowAutoEntry = true;
     }
-    checkForAutomaticEntry(); // Check for automatic letter entry
+    //checkForAutomaticEntry(); // Check for automatic letter entry
 
   }
 }
