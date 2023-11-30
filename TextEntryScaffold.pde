@@ -22,7 +22,7 @@ int letterEntryTimeout = 1000; // 1.0 seconds in milliseconds
 // You can use this website to compute the PPI: https://www.sven.de/dpi/
 // Manually the resolution for your display, and the screen size, and calculate
 // Especially for retina displays -- Don't just rely on online search!
-final int DPIofYourDeviceScreen = 127; 
+final int DPIofYourDeviceScreen = 166; // default: 127
 final float sizeOfInputArea = DPIofYourDeviceScreen*1; //aka, 1.0 inches square!
 PImage watch;
 
@@ -161,6 +161,13 @@ void draw()
     fill(128);
     text("Target:   " + currentPhrase, 70, 100); //draw the target string
     text("Entered:  " + currentTyped +"|", 70, 140); //draw what the user has entered thus far 
+    
+    //draw hint text
+    textSize(16);
+    text("Please press any key n times to input the nth letter it contains.\n"+
+    "Wait for 1 second for the letter to automatically enter.\n"+
+    "You can also press the background letter display to immediately enter the letter.", 30, 730);
+    textSize(24);
 
     //draw very basic next button
     fill(255, 0, 0);
@@ -248,7 +255,7 @@ boolean didMouseClick(float x, float y, float w, float h) //simple function to d
 void handleButtonMultiClick(CustomButton button, String label) {
   if (button.isClicked(mouseX, mouseY)) {
     int currentTime = millis();
-    if (!lastClickedLabel.equals(label) || currentTime - lastClickTime > 1500) {
+    if (!lastClickedLabel.equals(label) || currentTime - lastClickTime > 1000) {
       clickCount = 0;
       lastClickedLabel = label;
     }
@@ -337,26 +344,20 @@ void mousePressed()
     handleBackspace();
   }
 
-
-  /*if (didMouseClick(width/2-sizeOfInputArea/2, height/2-sizeOfInputArea/2, sizeOfInputArea, sizeOfInputArea/2)) //check if click occured in letter area
-  {
-    if (currentLetter=='_') //if underscore, consider that a space bar
-      currentTyped+=" ";
-    else if (currentLetter=='`' & currentTyped.length()>0) //if `, treat that as a delete command
-      currentTyped = currentTyped.substring(0, currentTyped.length()-1);
-    else if (currentLetter!='`') //if not any of the above cases, add the current letter to the typed string
-      currentTyped+=currentLetter;
-  }*/
   // Adjust this to check for clicks in the top 1/4 area of sizeOfInputArea
   if (didMouseClick(width/2 - sizeOfInputArea/2, height/2 - sizeOfInputArea/2, sizeOfInputArea, sizeOfInputArea/4)) {
     // Logic for when the top 1/4 area is clicked
     if (currentLetter == '_') {
-      currentTyped += " ";
+      //currentTyped += " ";
     } else if (currentLetter == '`' && currentTyped.length() > 0) {
       currentTyped = currentTyped.substring(0, currentTyped.length() - 1);
     } else if (currentLetter != '`') {
       currentTyped += currentLetter;
     }
+    currentLetter = '_';
+    // Reset the last letter change time to prevent immediate automatic entry of a new letter
+    lastLetterChangeTime = millis();
+    allowAutoEntry = false;
   }
 
   //You are allowed to have a next button outside the 1" area
@@ -378,7 +379,6 @@ void mouseReleased() {
   WXYZButton.isPressed = false;
   spaceButton.isPressed = false;
   backspaceButton.isPressed = false;
-  // ... Reset other buttons similarly ...
 }
 
 boolean didMouseClickForPrev() {
